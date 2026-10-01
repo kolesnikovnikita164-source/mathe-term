@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Term Master</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
+
+    body {
+        font-family: Arial, sans-serif;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #111827, #1e3a8a);
+        color: white;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+    }
+
+    .game {
+        width: 100%;
+        max-width: 650px;
+        background: #111827;
+        border: 2px solid #374151;
+        border-radius: 20px;
+        padding: 25px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    h1 {
+        text-align: center;
+        font-size: 38px;
+        margin-bottom: 10px;
+    }
+
+    .subtitle {
+        text-align: center;
+        color: #9ca3af;
+        margin-bottom: 25px;
+    }
+
+    .screen {
+        display: none;
+    }
+
+    .screen.active {
+        display: block;
+    }
+
+    .start-btn,
+    .restart-btn {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 12px;
+        background: #22c55e;
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: 0.2s;
+    }
+
+    button:hover {
+        transform: scale(1.02);
+        filter: brightness(1.1);
+    }
+
+    .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-bottom: 20px;
+    }
+
+    .stat {
+        background: #1f2937;
+        padding: 12px 5px;
+        border-radius: 12px;
+        text-align: center;
+    }
+
+    .stat-title {
+        font-size: 12px;
+        color: #9ca3af;
+    }
+
+    .stat-value {
+        font-size: 22px;
+        font-weight: bold;
+        margin-top: 4px;
+    }
+
+    .timer-container {
+        height: 10px;
+        background: #374151;
+        border-radius: 20px;
+        overflow: hidden;
+        margin-bottom: 25px;
+    }
+
+    .timer {
+        height: 100%;
+        width: 100%;
+        background: #22c55e;
+        transition: width 0.1s linear;
+    }
+
+    .question-box {
+        background: #1f2937;
+        border-radius: 18px;
+        padding: 30px 15px;
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .level-text {
+        color: #60a5fa;
+        font-weight: bold;
+        margin-bottom: 15px;
+    }
+
+    .question {
+        font-size: 38px;
+        font-weight: bold;
+        word-break: break-word;
+    }
+
+    .answer {
+        width: 100%;
+        padding: 16px;
+        border: 2px solid #374151;
+        background: #030712;
+        color: white;
+        border-radius: 12px;
+        font-size: 22px;
+        text-align: center;
+        outline: none;
+    }
+
+    .answer:focus {
+        border-color: #3b82f6;
+    }
+
+    .submit {
+        width: 100%;
+        margin-top: 12px;
+        padding: 15px;
+        border: none;
+        border-radius: 12px;
+        background: #3b82f6;
+        color: white;
+        font-size: 18px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .skip {
+        width: 100%;
+        margin-top: 10px;
+        padding: 12px;
+        border: none;
+        border-radius: 12px;
+        background: #374151;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+    }
+
+    .message {
+        min-height: 30px;
+        text-align: center;
+        margin-top: 15px;
+        font-size: 17px;
+        font-weight: bold;
+    }
+
+    .instructions {
+        background: #1f2937;
+        padding: 18px;
+        border-radius: 12px;
+        margin: 20px 0;
+        color: #d1d5db;
+        line-height: 1.6;
+    }
+
+    .result {
+        text-align: center;
+    }
+
+    .result h2 {
+        font-size: 35px;
+        margin-bottom: 20px;
+    }
+
+    .final-score {
+        font-size: 60px;
+        font-weight: bold;
+        color: #facc15;
+        margin: 20px;
+    }
+
+    .result-info {
+        color: #d1d5db;
+        line-height: 2;
+        margin-bottom: 25px;
+    }
+
+    @media (max-width: 500px) {
+        .game {
+            padding: 15px;
+        }
+
+        h1 {
+            font-size: 30px;
+        }
+
+        .question {
+            font-size: 28px;
+        }
+
+        .stats {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <!-- START -->
+    <div id="startScreen" class="screen active">
+
+        <h1>🧮 Term Master</h1>
+
+        <div class="subtitle">
+            Wie gut kannst du Terme vereinfachen?
+        </div>
+
+        <div class="instructions">
+            <b>🎯 Ziel:</b> Löse so viele Terme wie möglich!<br><br>
+
+            ❤️ Du hast 3 Leben.<br>
+            ⭐ Für richtige Antworten bekommst du Punkte.<br>
+            🔥 Richtige Antworten hintereinander geben einen Streak-Bonus.<br>
+            ⏱️ Jede Aufgabe hat ein Zeitlimit.<br>
+            📈 Die Aufgaben werden mit jedem Level schwieriger.
+        </div>
+
+        <button class="start-btn" onclick="startGame()">
+            🚀 Spiel starten
+        </button>
+
+    </div>
+
+
+    <!-- GAME -->
+    <div id="gameScreen" class="screen">
+
+        <h1>🧮 Term Master</h1>
+
+        <div class="stats">
+
+            <div class="stat">
+                <div class="stat-title">Punkte</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-title">Leben</div>
+                <div class="stat-value" id="lives">❤️❤️❤️</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-title">Streak</div>
+                <div class="stat-value" id="streak">0</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat-title">Aufgabe</div>
+                <div class="stat-value" id="questionNumber">1</div>
+            </div>
+
+        </div>
+
+        <div class="timer-container">
+            <div class="timer" id="timer"></div>
+        </div>
+
+        <div class="question-box">
+
+            <div class="level-text" id="level">
+                LEVEL 1
+            </div>
+
+            <div class="question" id="question">
+                3x + 5x
+            </div>
+
+        </div>
+
+        <input
+            id="answer"
+            class="answer"
+            type="text"
+            placeholder="Deine Antwort..."
+            autocomplete="off"
+        >
+
+        <button class="submit" onclick="checkAnswer()">
+            ✅ Antwort prüfen
+        </button>
+
+        <button class="skip" onclick="skipQuestion()">
+            ⏭️ Überspringen
+        </button>
+
+        <div class="message" id="message"></div>
+
+    </div>
+
+
+    <!-- END -->
+    <div id="endScreen" class="screen">
+
+        <div class="result">
+
+            <h2>🏁 Spiel vorbei!</h2>
+
+            <div class="final-score" id="finalScore">
+                0
+            </div>
+
+            <div class="result-info">
+                ⭐ Punkte: <span id="endPoints">0</span><br>
+                📝 Aufgaben: <span id="endQuestions">0</span><br>
+                🔥 Bester Streak: <span id="endStreak">0</span><br>
+                📈 Level erreicht: <span id="endLevel">1</span>
+            </div>
+
+            <button class="restart-btn" onclick="startGame()">
+                🔄 Nochmal spielen
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+let score = 0;
+let lives = 3;
+let streak = 0;
+let bestStreak = 0;
+let questionNumber = 0;
+let level = 1;
+
+let currentAnswer = "";
+
+let timerInterval;
+let timeLeft = 10;
+let maxTime = 10;
+
+let gameRunning = false;
+
+
+// Zufallszahl
+function random(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+
+// Bildschirm wechseln
+function showScreen(id) {
+
+    document.querySelectorAll(".screen").forEach(screen => {
+        screen.classList.remove("active");
+    });
+
+    document.getElementById(id).classList.add("active");
+}
+
+
+// Spiel starten
+function startGame() {
+
+    score = 0;
+    lives = 3;
+    streak = 0;
+    bestStreak = 0;
+    questionNumber = 0;
+    level = 1;
+
+    gameRunning = true;
+
+    updateStats();
+
+    showScreen("gameScreen");
+
+    nextQuestion();
+}
+
+
+// Level bestimmen
+function calculateLevel() {
+
+    level = Math.floor(questionNumber / 5) + 1;
+
+    if (level > 10) {
+        level = 10;
+    }
+
+}
+
+
+// Term erzeugen
+function createTerm() {
+
+    let a, b, c, d;
+
+    calculateLevel();
+
+
+    // LEVEL 1
+    // 3x + 5x
+    if (level === 1) {
+
+        a = random(2, 10);
+        b = random(2, 10);
+
+        return {
+            text: `${a}x + ${b}x`,
+            answer: `${a + b}x`
+        };
+    }
+
+
+    // LEVEL 2
+    // 10x - 4x
+    if (level === 2) {
+
+        a = random(5, 15);
+        b = random(2, a - 1);
+
+        return {
+            text: `${a}x - ${b}x`,
+            answer: `${a - b}x`
+        };
+    }
+
+
+    // LEVEL 3
+    // 4x + 7
+    if (level === 3) {
+
+        a = random(2, 12);
+        b = random(1, 15);
+
+        return {
+            text: `${a}x + ${b}`,
+            answer: `${a}x + ${b}`
+        };
+    }
+
+
+    // LEVEL 4
+    // 3x + 5x + 7
+    if (level === 4) {
+
+        a = random(2, 10);
+        b = random(2, 10);
+        c = random(1, 15);
+
+        return {
+            text: `${a}x + ${b}x + ${c}`,
+            answer: `${a + b}x + ${c}`
+        };
+    }
+
+
+    // LEVEL 5
+    // 10x - 3x + 5
+    if (level === 5) {
+
+        a = random(6, 15);
+        b = random(2, a - 1);
+        c = random(1, 20);
+
+        return {
+            text: `${a}x - ${b}x + ${c}`,
+            answer: `${a - b}x + ${c}`
+        };
+    }
+
+
+    // LEVEL 6
+    // 3(x + 4)
+    if (level === 6) {
+
+        a = random(2, 10);
+        b = random(2, 10);
+
+        return {
+            text: `${a}(x + ${b})`,
+            answer: `${a}x + ${a * b}`
+        };
+    }
+
+
+    // LEVEL 7
+    // 4(x - 3)
+    if (level === 7) {
+
+        a = random(2, 10);
+        b = random(1, 8);
+
+        return {
+            text: `${a}(x - ${b})`,
+            answer: `${a}x - ${a * b}`
+        };
+    }
+
+
+    // LEVEL 8
+    // 3x + 4x - 5 + 2
+    if (level === 8) {
+
+        a = random(2, 10);
+        b = random(2, 10);
+        c = random(2, 10);
+        d = random(1, 8);
+
+        return {
+            text: `${a}x + ${b}x - ${c} + ${d}`,
+            answer: `${a + b}x - ${c - d}`
+        };
+    }
+
+
+    // LEVEL 9
+    // 5x - 2x + 8 - 3
+    if (level === 9) {
+
+        a = random(5, 15);
+        b = random(2, a - 1);
+        c = random(5, 15);
+        d = random(1, c - 1);
+
+        return {
+            text: `${a}x - ${b}x + ${c} - ${d}`,
+            answer: `${a - b}x + ${c - d}`
+        };
+    }
+
+
+    // LEVEL 10
+    // 3(x + 4) + 2x
+    if (level === 10) {
+
+        a = random(2, 8);
+        b = random(2, 8);
+        c = random(2, 8);
+
+        return {
+            text: `${a}(x + ${b}) + ${c}x`,
+            answer: `${a + c}x + ${a * b}`
+        };
+    }
+
+}
+
+
+// Antwort vereinheitlichen
+function normalizeAnswer(answer) {
+
+    return answer
+        .toLowerCase()
+        .replace(/\s+/g, "")
+        .replace(/−/g, "-")
+        .replace(/\*/g, "");
+}
+
+
+// Nächste Aufgabe
+function nextQuestion() {
+
+    if (!gameRunning) return;
+
+    questionNumber++;
+
+    calculateLevel();
+
+    let term = createTerm();
+
+    currentAnswer = term.answer;
+
+    document.getElementById("question").textContent = term.text;
+
+    document.getElementById("questionNumber").textContent = questionNumber;
+
+    document.getElementById("level").textContent =
+        "LEVEL " + level;
+
+    document.getElementById("answer").value = "";
+
+    document.getElementById("message").textContent = "";
+
+    document.getElementById("answer").focus();
+
+    startTimer();
+}
+
+
+// Timer
+function startTimer() {
+
+    clearInterval(timerInterval);
+
+    // Je höher das Level,
+    // desto weniger Zeit
+    maxTime = Math.max(4, 10 - (level - 1) * 0.5);
+
+    timeLeft = maxTime;
+
+    updateTimer();
+
+    timerInterval = setInterval(() => {
+
+        timeLeft -= 0.1;
+
+        updateTimer();
+
+        if (timeLeft <= 0) {
+
+            clearInterval(timerInterval);
+
+            timeUp();
+
+        }
+
+    }, 100);
+
+}
+
+
+// Timer anzeigen
+function updateTimer() {
+
+    let percentage = (timeLeft / maxTime) * 100;
+
+    document.getElementById("timer").style.width =
+        percentage + "%";
+}
+
+
+// Zeit abgelaufen
+function timeUp() {
+
+    lives--;
+
+    streak = 0;
+
+    document.getElementById("message").textContent =
+        "⏰ Zeit vorbei! Die richtige Antwort war: " + currentAnswer;
+
+    updateStats();
+
+    if (lives <= 0) {
+
+        setTimeout(endGame, 1000);
+
+    } else {
+
+        setTimeout(nextQuestion, 1200);
+
+    }
+
+}
+
+
+// Antwort prüfen
+function checkAnswer() {
+
+    if (!gameRunning) return;
+
+    let userAnswer =
+        document.getElementById("answer").value;
+
+    if (userAnswer.trim() === "") {
+        return;
+    }
+
+    clearInterval(timerInterval);
+
+    if (
+        normalizeAnswer(userAnswer) ===
+        normalizeAnswer(currentAnswer)
+    ) {
+
+        // RICHTIG
+
+        let points = 10 * level;
+
+        // Streak Bonus
+        if (streak >= 2) {
+            points += streak * 5;
+        }
+
+        score += points;
+
+        streak++;
+
+        if (streak > bestStreak) {
+            bestStreak = streak;
+        }
+
+        document.getElementById("message").textContent =
+            "✅ Richtig! +" + points + " Punkte 🔥";
+
+        updateStats();
+
+        setTimeout(nextQuestion, 800);
+
+    } else {
+
+        // FALSCH
+
+        lives--;
+
+        streak = 0;
+
+        document.getElementById("message").textContent =
+            "❌ FALSCH! 😈 Der Term war stärker als du!";
+
+        updateStats();
+
+        if (lives <= 0) {
+
+            setTimeout(endGame, 1000);
+
+        } else {
+
+            setTimeout(nextQuestion, 1200);
+
+        }
+
+    }
+
+}
+
+
+// Aufgabe überspringen
+function skipQuestion() {
+
+    if (!gameRunning) return;
+
+    clearInterval(timerInterval);
+
+    streak = 0;
+
+    document.getElementById("message").textContent =
+        "⏭️ Übersprungen!";
+
+    setTimeout(nextQuestion, 600);
+}
+
+
+// Stats aktualisieren
+function updateStats() {
+
+    document.getElementById("score").textContent =
+        score;
+
+    document.getElementById("streak").textContent =
+        streak;
+
+    let hearts = "";
+
+    for (let i = 0; i < lives; i++) {
+        hearts += "❤️";
+    }
+
+    if (hearts === "") {
+        hearts = "💀";
+    }
+
+    document.getElementById("lives").textContent =
+        hearts;
+}
+
+
+// Spiel beenden
+function endGame() {
+
+    gameRunning = false;
+
+    clearInterval(timerInterval);
+
+    document.getElementById("finalScore").textContent =
+        score;
+
+    document.getElementById("endPoints").textContent =
+        score;
+
+    document.getElementById("endQuestions").textContent =
+        questionNumber;
+
+    document.getElementById("endStreak").textContent =
+        bestStreak;
+
+    document.getElementById("endLevel").textContent =
+        level;
+
+    showScreen("endScreen");
+}
+
+
+// ENTER-Taste
+document.getElementById("answer").addEventListener(
+    "keydown",
+    function(event) {
+
+        if (event.key === "Enter") {
+            checkAnswer();
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
